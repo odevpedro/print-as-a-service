@@ -1,0 +1,182 @@
+name: EnterpriseHelloWorld CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  REGISTRY: localhost:5000
+
+jobs:
+  # ===========================================================================
+  # Estágio 1: Lint do Código da Saudação
+  # ===========================================================================
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Check Hello service syntax
+        run: node -c services/hello-service/src/index.js
+      - name: Check Space service syntax
+        run: node -c services/space-service/src/index.js
+      - name: Check World service syntax
+        run: node -c services/world-service/src/index.js
+      - name: Check Exclamation service syntax
+        run: node -c services/exclamation-service/src/index.js
+      - name: Check Orchestrator syntax
+        run: node -c services/orchestrator/src/index.js
+
+  # ===========================================================================
+  # Estágio 2: Testes Unitários dos Tokens
+  # ===========================================================================
+  test:
+    runs-on: ubuntu-latest
+    needs: [lint]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Test Hello returns correct token
+        run: |
+          cd services/hello-service && npm install
+          echo "Hello service dependencies installed"
+      - name: Test World returns correct token
+        run: |
+          cd services/world-service && npm install
+          echo "World service dependencies installed"
+      - name: Validate ASCII art in README
+        run: |
+          grep -q "Hello, World" README.md && echo "README contains greeting" || exit 1
+
+  # ===========================================================================
+  # Estágio 3: Build das Imagens Docker
+  # ===========================================================================
+  build:
+    runs-on: ubuntu-latest
+    needs: [test]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build all service images
+        run: |
+          for svc in hello-service space-service world-service exclamation-service space-provisioning punctuation-engine orchestrator ab-testing; do
+            docker build -t ${{ env.REGISTRY }}/pas-${svc}:latest services/$svc
+            echo "Built $svc"
+          done
+
+  # ===========================================================================
+  # Estágio 4: Punctuation Compliance Check
+  # ===========================================================================
+  punctuation-compliance:
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify exclamation mark compliance
+        run: |
+          echo "Checking punctuation compliance..."
+          echo "Model confidence threshold: 99.97%"
+          echo "Verifying that 'Hello, World' ends with '!'..."
+          grep -q "exclamation" services/exclamation-service/src/index.js && echo "Punctuation compliance: PASSED" || echo "Punctuation compliance: FAILED"
+
+  # ===========================================================================
+  # Estágio 5: Greeting Sentiment Analysis
+  # ===========================================================================
+  sentiment-analysis:
+    runs-on: ubuntu-latest
+    needs: [punctuation-compliance]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Analyze greeting sentiment
+        run: |
+          echo "Running sentiment analysis on greeting..."
+          echo "Input: 'Hello, World!'"
+          echo "Sentiment: POSITIVE (confidence: 99.97%)"
+          echo "Tone analysis: FRIENDLY, WELCOMING, ENTERPRISE-READY"
+          echo "Sentiment Analysis: PASSED"
+
+  # ===========================================================================
+  # Estágio 6: Security Scan
+  # ===========================================================================
+  security:
+    runs-on: ubuntu-latest
+    needs: [sentiment-analysis]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Trivy scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "fs"
+          scan-ref: "."
+          format: "sarif"
+          output: "trivy-results.sarif"
+          severity: "HIGH,CRITICAL"
+      - name: Upload results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: "trivy-results.sarif"
+
+  # ===========================================================================
+  # Estágio 7: Push Images
+  # ===========================================================================
+  push:
+    runs-on: ubuntu-latest
+    needs: [security]
+    steps:
+      - name: Push to local registry
+        run: |
+          echo "Pushing to registry ${{ env.REGISTRY }}..."
+          echo "Images pushed successfully (registry is ephemeral)"
+
+  # ===========================================================================
+  # Estágio 8: Deploy to Kind
+  # ===========================================================================
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [push]
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy to Kind cluster
+        run: |
+          echo "Deploying to local Kind cluster..."
+          echo "Creating namespace..."
+          echo "Deploying orchestrator..."
+          echo "Deploying token services..."
+          echo "Configuring HPA for space-service..."
+          echo "Deploy complete: http://hello.print-as-a-service.local/greet"
+
+  # ===========================================================================
+  # Estágio 9: E2E Greeting Test
+  # ===========================================================================
+  e2e:
+    runs-on: ubuntu-latest
+    needs: [deploy]
+    steps:
+      - name: Test complete greeting flow
+        run: |
+          echo "Testing end-to-end greeting..."
+          echo "Request: POST /greet"
+          echo "Expected: Hello, World!"
+          echo "E2E Test: PASSED"
+          echo "Greeting quality: ENTERPRISE GRADE"
+
+  # ===========================================================================
+  # Estágio 10: Post-deploy A/B Analysis
+  # ===========================================================================
+  ab-analysis:
+    runs-on: ubuntu-latest
+    needs: [e2e]
+    steps:
+      - name: Compare A/B variants
+        run: |
+          echo "A/B Test Analysis:"
+          echo "Variant A: 'Hello, World!' — 87.3% engagement"
+          echo "Variant B: 'Hello, World!' — 86.8% engagement"
+          echo "Conclusion: Both variants are equal (p < 0.05)"
+          echo "Recommendation: Keep both variants running"

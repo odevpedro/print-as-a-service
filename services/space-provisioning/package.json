@@ -1,0 +1,12 @@
+{
+  "name": "@greeting/space-provisioning",
+  "version": "1.0.0",
+  "private": true,
+  "main": "src/index.js",
+  "scripts": { "start": "node src/index.js" },
+  "dependencies": {
+    "express": "^4.18.2",
+    "prom-client": "^15.1.0",
+    "pg": "^8.11.3"
+  }
+}

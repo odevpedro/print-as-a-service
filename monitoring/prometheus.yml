@@ -1,0 +1,60 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: "orchestrator"
+    static_configs:
+      - targets: ["orchestrator:8080"]
+        labels:
+          service: "orchestrator"
+          component: "greeting"
+
+  - job_name: "hello-service"
+    static_configs:
+      - targets: ["hello-service:4001"]
+        labels:
+          service: "hello"
+          token: "hello"
+
+  - job_name: "space-service"
+    static_configs:
+      - targets: ["space-service:4002"]
+        labels:
+          service: "space"
+          token: " "
+
+  - job_name: "world-service"
+    static_configs:
+      - targets: ["world-service:4003"]
+        labels:
+          service: "world"
+          token: "world"
+
+  - job_name: "exclamation-service"
+    static_configs:
+      - targets: ["exclamation-service:4004"]
+        labels:
+          service: "exclamation"
+          token: "!"
+
+  - job_name: "space-provisioning"
+    static_configs:
+      - targets: ["space-provisioning:4010"]
+        labels:
+          service: "space-provisioning"
+          domain: "infrastructure"
+
+  - job_name: "punctuation-engine"
+    static_configs:
+      - targets: ["punctuation-engine:4020"]
+        labels:
+          service: "punctuation-engine"
+          domain: "ml"
+
+  - job_name: "ab-testing"
+    static_configs:
+      - targets: ["ab-testing:4030"]
+        labels:
+          service: "ab-testing"
+          domain: "experimentation"

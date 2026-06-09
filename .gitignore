@@ -1,0 +1,49 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Docker
+.docker/
+
+# Terraform
+terraform/.terraform/
+terraform/terraform.tfstate*
+terraform/terraform.tfvars
+
+# Kubernetes
+k8s/**/__pycache__/
+
+# Monitoring (grafana provisioning may have local state)
+monitoring/grafana-data/
+
+# Build artifacts
+dist/
+build/
+*.tsbuildinfo
+
+# Dependências locais
+services/*/node_modules/
+
+# Docker compose data volumes (local development)
+data/

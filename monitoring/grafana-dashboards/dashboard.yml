@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: "Greeting Dashboards"
+    orgId: 1
+    folder: "Print-as-a-Service"
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /etc/grafana/provisioning/dashboards

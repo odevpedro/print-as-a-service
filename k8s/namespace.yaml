@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: print-as-a-service
+  labels:
+    name: print-as-a-service
+    environment: development
+    cost-center: "greeting-0001"
+    managed-by: terraform

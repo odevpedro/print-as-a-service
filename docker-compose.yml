@@ -1,0 +1,320 @@
+# =============================================================================
+# EnterpriseHelloWorld — Docker Compose
+# 20 containers delivering a single, perfectly orchestrated greeting.
+# =============================================================================
+
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+
+  # ===========================================================================
+  # PRINT-AS-A-SERVICE: Token Level Microservices
+  # Cada token da saudação é um bounded context com seu próprio ciclo de vida
+  # ===========================================================================
+  hello-service:
+    build: services/hello-service
+    container_name: pas-hello
+    ports: ["4001:4001"]
+    environment:
+      DB_HOST: hello-db
+    depends_on: [hello-db]
+    logging: *default-logging
+    networks: [pasnet]
+
+  space-service:
+    build: services/space-service
+    container_name: pas-space
+    ports: ["4002:4002"]
+    environment:
+      DB_HOST: space-db
+    depends_on: [space-db]
+    logging: *default-logging
+    networks: [pasnet]
+
+  world-service:
+    build: services/world-service
+    container_name: pas-world
+    ports: ["4003:4003"]
+    environment:
+      DB_HOST: world-db
+    depends_on: [world-db]
+    logging: *default-logging
+    networks: [pasnet]
+
+  exclamation-service:
+    build: services/exclamation-service
+    container_name: pas-exclamation
+    ports: ["4004:4004"]
+    environment:
+      DB_HOST: exclamation-db
+    depends_on: [exclamation-db]
+    logging: *default-logging
+    networks: [pasnet]
+
+  # ===========================================================================
+  # INFRASTRUCTURE SERVICES
+  # ===========================================================================
+  space-provisioning:
+    build: services/space-provisioning
+    container_name: pas-space-provisioning
+    ports: ["4010:4010"]
+    logging: *default-logging
+    networks: [pasnet]
+
+  punctuation-engine:
+    build: services/punctuation-engine
+    container_name: pas-punctuation-engine
+    ports: ["4020:4020"]
+    environment:
+      DB_HOST: punctuation-db
+    depends_on: [punctuation-db]
+    logging: *default-logging
+    networks: [pasnet]
+
+  orchestrator:
+    build: services/orchestrator
+    container_name: pas-orchestrator
+    ports: ["8081:8080"]
+    environment:
+      KAFKA_BROKER: kafka:9092
+      REDIS_HOST: redis
+      HELLO_SERVICE_URL: http://hello-service:4001
+      WORLD_SERVICE_URL: http://world-service:4003
+    depends_on:
+      kafka: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      hello-service: { condition: service_started }
+      world-service: { condition: service_started }
+      space-provisioning: { condition: service_started }
+      exclamation-service: { condition: service_started }
+      punctuation-engine: { condition: service_started }
+    logging: *default-logging
+    networks: [pasnet]
+
+  ab-testing:
+    build: services/ab-testing
+    container_name: pas-ab-testing
+    ports: ["4030:4030"]
+    environment:
+      DB_HOST: abtesting-db
+    depends_on: [abtesting-db]
+    logging: *default-logging
+    networks: [pasnet]
+
+  # ===========================================================================
+  # DATABASE LAYER — Um PostgreSQL por microsserviço de token
+  # Porque Hello e World têm necessidades de persistência fundamentalmente diferentes
+  # ===========================================================================
+  hello-db:
+    image: postgres:15-alpine
+    container_name: pas-hello-db
+    environment:
+      POSTGRES_DB: hellodb
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+    volumes:
+      - hello_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d hellodb"]
+      interval: 10s
+      timeout: 5s
+    logging: *default-logging
+    networks: [pasnet]
+
+  space-db:
+    image: postgres:15-alpine
+    container_name: pas-space-db
+    environment:
+      POSTGRES_DB: spacedb
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+    volumes:
+      - space_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d spacedb"]
+    logging: *default-logging
+    networks: [pasnet]
+
+  world-db:
+    image: postgres:15-alpine
+    container_name: pas-world-db
+    environment:
+      POSTGRES_DB: worlddb
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+    volumes:
+      - world_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d worlddb"]
+    logging: *default-logging
+    networks: [pasnet]
+
+  exclamation-db:
+    image: postgres:15-alpine
+    container_name: pas-exclamation-db
+    environment:
+      POSTGRES_DB: exclamationdb
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+    volumes:
+      - exclamation_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d exclamationdb"]
+    logging: *default-logging
+    networks: [pasnet]
+
+  punctuation-db:
+    image: postgres:15-alpine
+    container_name: pas-punctuation-db
+    environment:
+      POSTGRES_DB: punctuationdb
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+    volumes:
+      - punctuation_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d punctuationdb"]
+    logging: *default-logging
+    networks: [pasnet]
+
+  abtesting-db:
+    image: postgres:15-alpine
+    container_name: pas-abtesting-db
+    environment:
+      POSTGRES_DB: abtestingdb
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+    volumes:
+      - abtesting_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d abtestingdb"]
+    logging: *default-logging
+    networks: [pasnet]
+
+  # ===========================================================================
+  # CACHE LAYER
+  # ===========================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: pas-redis
+    ports: ["6380:6379"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+    logging: *default-logging
+    networks: [pasnet]
+
+  # ===========================================================================
+  # MESSAGING LAYER
+  # ===========================================================================
+  kafka:
+    image: bitnamilegacy/kafka:3.3.2
+    container_name: pas-kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_CFG_NODE_ID: "1"
+      KAFKA_CFG_PROCESS_ROLES: "broker,controller"
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: "1@kafka:9093"
+      KAFKA_CFG_LISTENERS: "PLAINTEXT://:9092,CONTROLLER://:9093"
+      KAFKA_CFG_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092"
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: "PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT"
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+    volumes:
+      - kafka_data:/bitnami/kafka
+    healthcheck:
+      test: ["CMD", "kafka-topics.sh", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+    logging: *default-logging
+    networks: [pasnet]
+
+  kafka-init:
+    image: bitnamilegacy/kafka:3.3.2
+    container_name: pas-kafka-init
+    depends_on:
+      kafka: { condition: service_healthy }
+    volumes:
+      - ./kafka/init-topics.sh:/init-topics.sh
+    entrypoint: ["/bin/sh", "/init-topics.sh"]
+    networks: [pasnet]
+
+  # ===========================================================================
+  # OBSERVABILITY
+  # ===========================================================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: pas-prometheus
+    ports: ["9090:9090"]
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=30d"
+    logging: *default-logging
+    networks: [pasnet]
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: pas-grafana
+    ports: ["3001:3000"]
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - ./monitoring/grafana-dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana-datasources:/etc/grafana/provisioning/datasources
+      - grafana_data:/var/lib/grafana
+    depends_on: [prometheus]
+    logging: *default-logging
+    networks: [pasnet]
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.76.0
+    container_name: pas-jaeger
+    ports:
+      - "16686:16686"
+      - "4318:4318"
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    logging: *default-logging
+    networks: [pasnet]
+
+  # ===========================================================================
+  # LOCAL REGISTRY
+  # ===========================================================================
+  registry:
+    image: registry:2
+    container_name: pas-registry
+    ports: ["5000:5000"]
+    volumes:
+      - registry_data:/var/lib/registry
+    logging: *default-logging
+    networks: [pasnet]
+
+volumes:
+  hello_db_data:
+  space_db_data:
+  world_db_data:
+  exclamation_db_data:
+  punctuation_db_data:
+  abtesting_db_data:
+  redis_data:
+  kafka_data:
+  prometheus_data:
+  grafana_data:
+  registry_data:
+
+networks:
+  pasnet:
+    driver: bridge

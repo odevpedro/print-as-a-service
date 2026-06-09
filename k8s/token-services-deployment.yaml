@@ -1,0 +1,179 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-service
+  namespace: print-as-a-service
+  labels:
+    app: hello-service
+    token: hello
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: hello-service
+  template:
+    metadata:
+      labels:
+        app: hello-service
+        token: hello
+    spec:
+      containers:
+        - name: hello
+          image: localhost:5000/pas-hello:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 4001
+          env:
+            - name: DB_HOST
+              value: hello-db
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-service
+  namespace: print-as-a-service
+spec:
+  selector:
+    app: hello-service
+  ports:
+    - port: 4001
+      targetPort: 4001
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: space-service
+  namespace: print-as-a-service
+  labels:
+    app: space-service
+    token: space
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: space-service
+  template:
+    metadata:
+      labels:
+        app: space-service
+        token: space
+    spec:
+      containers:
+        - name: space
+          image: localhost:5000/pas-space:latest
+          ports:
+            - containerPort: 4002
+          env:
+            - name: DB_HOST
+              value: space-db
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: space-service
+  namespace: print-as-a-service
+spec:
+  selector:
+    app: space-service
+  ports:
+    - port: 4002
+      targetPort: 4002
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: world-service
+  namespace: print-as-a-service
+  labels:
+    app: world-service
+    token: world
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: world-service
+  template:
+    metadata:
+      labels:
+        app: world-service
+        token: world
+    spec:
+      containers:
+        - name: world
+          image: localhost:5000/pas-world:latest
+          ports:
+            - containerPort: 4003
+          env:
+            - name: DB_HOST
+              value: world-db
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: world-service
+  namespace: print-as-a-service
+spec:
+  selector:
+    app: world-service
+  ports:
+    - port: 4003
+      targetPort: 4003
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: exclamation-service
+  namespace: print-as-a-service
+  labels:
+    app: exclamation-service
+    token: exclamation
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: exclamation-service
+  template:
+    metadata:
+      labels:
+        app: exclamation-service
+        token: exclamation
+    spec:
+      containers:
+        - name: exclamation
+          image: localhost:5000/pas-exclamation:latest
+          ports:
+            - containerPort: 4004
+          env:
+            - name: DB_HOST
+              value: exclamation-db
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: exclamation-service
+  namespace: print-as-a-service
+spec:
+  selector:
+    app: exclamation-service
+  ports:
+    - port: 4004
+      targetPort: 4004

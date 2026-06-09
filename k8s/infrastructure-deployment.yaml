@@ -1,0 +1,133 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: space-provisioning
+  namespace: print-as-a-service
+  labels:
+    app: space-provisioning
+    domain: infrastructure
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: space-provisioning
+  template:
+    metadata:
+      labels:
+        app: space-provisioning
+        domain: infrastructure
+    spec:
+      containers:
+        - name: space-provisioning
+          image: localhost:5000/pas-space-provisioning:latest
+          ports:
+            - containerPort: 4010
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: space-provisioning
+  namespace: print-as-a-service
+spec:
+  selector:
+    app: space-provisioning
+  ports:
+    - port: 4010
+      targetPort: 4010
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: punctuation-engine
+  namespace: print-as-a-service
+  labels:
+    app: punctuation-engine
+    domain: ml
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: punctuation-engine
+  template:
+    metadata:
+      labels:
+        app: punctuation-engine
+        domain: ml
+    spec:
+      containers:
+        - name: punctuation-engine
+          image: localhost:5000/pas-punctuation-engine:latest
+          ports:
+            - containerPort: 4020
+          env:
+            - name: DB_HOST
+              value: punctuation-db
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: punctuation-engine
+  namespace: print-as-a-service
+spec:
+  selector:
+    app: punctuation-engine
+  ports:
+    - port: 4020
+      targetPort: 4020
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ab-testing
+  namespace: print-as-a-service
+  labels:
+    app: ab-testing
+    domain: experimentation
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ab-testing
+  template:
+    metadata:
+      labels:
+        app: ab-testing
+        domain: experimentation
+    spec:
+      containers:
+        - name: ab-testing
+          image: localhost:5000/pas-ab-testing:latest
+          ports:
+            - containerPort: 4030
+          env:
+            - name: DB_HOST
+              value: abtesting-db
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ab-testing
+  namespace: print-as-a-service
+spec:
+  selector:
+    app: ab-testing
+  ports:
+    - port: 4030
+      targetPort: 4030

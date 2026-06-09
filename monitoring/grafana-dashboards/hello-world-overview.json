@@ -1,0 +1,67 @@
+{
+  "__inputs": [],
+  "__requires": [],
+  "title": "Hello World Enterprise Overview",
+  "uid": "hello-world-overview",
+  "version": 1,
+  "timezone": "browser",
+  "time": { "from": "now-15m", "to": "now" },
+  "panels": [
+    {
+      "title": "Greetings Produced Per Second",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum(rate(hello_world_greetings_total[5m]))", "legendFormat": "Greetings/s" }],
+      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 0 }
+    },
+    {
+      "title": "Greeting Latency (p99)",
+      "type": "graph",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "histogram_quantile(0.99, sum(rate(hello_world_latency_seconds_bucket[5m])) by (le))", "legendFormat": "p99" }],
+      "gridPos": { "h": 8, "w": 6, "x": 6, "y": 0 }
+    },
+    {
+      "title": "Exclamation Confidence Score",
+      "type": "gauge",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "exclamation_confidence_score", "legendFormat": "Confidence" }],
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 0 }
+    },
+    {
+      "title": "Space Provisioning Errors",
+      "type": "graph",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "rate(space_provisioning_errors_total[5m])", "legendFormat": "Errors" }],
+      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 8 }
+    },
+    {
+      "title": "Token Requests by Service",
+      "type": "piechart",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "sum(hello_token_requests_total) by (status)", "legendFormat": "Hello" },
+        { "expr": "sum(space_token_requests_total) by (status)", "legendFormat": "Space" },
+        { "expr": "sum(world_token_requests_total) by (status)", "legendFormat": "World" },
+        { "expr": "sum(exclamation_token_requests_total) by (status)", "legendFormat": "Exclamation" }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 6, "y": 8 }
+    },
+    {
+      "title": "A/B Test Engagement Score",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "ab_testing_engagement_score{variant='A'}", "legendFormat": "Variant A" }],
+      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 16 }
+    },
+    {
+      "title": "World Circuit Breaker State",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "world_circuit_breaker_state", "legendFormat": "0=closed, 1=open" }],
+      "gridPos": { "h": 8, "w": 6, "x": 6, "y": 16 }
+    }
+  ],
+  "tags": ["greeting", "enterprise"],
+  "schemaVersion": 27
+}
