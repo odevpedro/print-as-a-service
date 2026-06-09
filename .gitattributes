@@ -1,0 +1,8 @@
+*.md linguist-documentation
+*.yml linguist-documentation
+*.yaml linguist-documentation
+*.json linguist-documentation
+*.tf linguist-documentation
+*.sh linguist-documentation
+docker-compose.yml linguist-documentation
+.gitignore linguist-documentation
